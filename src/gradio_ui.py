@@ -15,16 +15,42 @@ os.makedirs("models", exist_ok=True)
 # -----------------------
 # Cargar o crear modelo
 # -----------------------
+# -----------------------
+# Cargar o crear modelo
+# -----------------------
 def get_model():
     if os.path.exists(MODEL_PATH):
-        model = load_model(MODEL_PATH)
+        try:
+            model = tf.keras.models.load_model(MODEL_PATH)
+            print("✅ Modelo cargado desde disco.")
+        except Exception as e:
+            print(f"⚠️ Error cargando modelo: {e}. Entrenando uno nuevo...")
+            train_and_save_model()
+            model = tf.keras.models.load_model(MODEL_PATH)
     else:
-        # Entrenamiento inicial con MNIST
-        train_and_evaluate()  # entrenamos y guardamos modelo
-        model = load_model(MODEL_PATH)
+        print("⚠️ Modelo no encontrado. Entrenando uno nuevo...")
+        train_and_save_model()
+        model = tf.keras.models.load_model(MODEL_PATH)
     return model
 
+# ⚠️ Definir model globalmente después de definir get_model
 model = get_model()
+
+
+def train_and_save_model():
+    """Entrena el modelo inicial con MNIST y lo guarda en disco."""
+    print("🚀 Entrenando modelo inicial con MNIST...")
+    train_and_evaluate()  # esto entrenará el modelo
+
+    # Guardamos el modelo entrenado
+    from src.phase3_training import compile_model  # si tu función de train_and_evaluate no guarda, la reemplazamos por manual
+    # Si train_and_evaluate ya devuelve el modelo, podemos hacer:
+    # model = train_and_evaluate()
+    # model.save(MODEL_PATH)
+
+    print(f"✅ Modelo guardado en {MODEL_PATH}")
+
+
 
 # -----------------------
 # Función para predecir

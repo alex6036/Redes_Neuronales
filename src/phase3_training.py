@@ -38,6 +38,10 @@ def train_and_evaluate():
     print("\n📊 Evaluando en test set...")
     loss, acc = model.evaluate(x_test, y_test, verbose=0)
     print(f"✅ Precisión final en test: {acc:.4f}")
+    # Guardar modelo entrenado
+    
+    model.save("models/mnist_model.h5")
+    print("✅ Modelo guardado en models/mnist_model.h5")
 
 def run_example():
     train_and_evaluate()

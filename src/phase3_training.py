@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow.keras.utils import to_categorical
+from keras.utils import to_categorical   # ✅ mejor que tensorflow.keras.utils
 from src.phase2_compiler import compile_model
 
 def load_data():

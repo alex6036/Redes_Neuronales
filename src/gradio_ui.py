@@ -18,21 +18,20 @@ def get_model():
             model = tf.keras.models.load_model(MODEL_PATH)
             print("✅ Modelo cargado desde disco.")
         except:
-            raise RuntimeError("⚠️ Error cargando modelo. Entrena un modelo nuevo primero.")
+            raise RuntimeError("⚠️ Error cargando modelo. Entrena un modelo primero.")
     else:
-        raise FileNotFoundError("⚠️ Modelo no encontrado. Ejecuta el script de entrenamiento inicial primero.")
+        raise FileNotFoundError("⚠️ Modelo no encontrado. Ejecuta fase3 para entrenar primero.")
     return model
 
 model = get_model()
 
 # -----------------------
-# Función de predicción y reentrenamiento
+# Función de predicción y reentrenamiento opcional
 # -----------------------
 def predict_and_correct(image: Image.Image, correct_label: str = "-"):
     """
-    Predice el dígito de la imagen. 
-    Si el usuario corrige la etiqueta (correct_label != "-"), reentrena el modelo.
-    Devuelve la clase predicha y las probabilidades de cada dígito.
+    Predice el dígito de la imagen y devuelve probabilidades de todos los dígitos.
+    Si correct_label != "-", reentrena el modelo con esa etiqueta.
     """
     # Preprocesar imagen
     img = image.convert("L").resize((28,28))
@@ -43,7 +42,7 @@ def predict_and_correct(image: Image.Image, correct_label: str = "-"):
     pred_class = int(np.argmax(pred))
     pred_probs = pred.flatten().tolist()  # Probabilidades de cada dígito
 
-    # Reentrenar solo si el usuario puso un número real
+    # Reentrenar si el usuario corrigió la etiqueta
     if correct_label != "-":
         correct_label_int = int(correct_label)
 
@@ -85,32 +84,25 @@ def predict_and_correct(image: Image.Image, correct_label: str = "-"):
         model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
         model.fit(dataset, epochs=3, verbose=0)
         model.save(MODEL_PATH)
-
         pred_class = correct_label_int  # reflejar corrección inmediata
 
-    # Devolver clase y probabilidades
+    # Devolver probabilidades de todos los dígitos
     return {str(i): prob for i, prob in enumerate(pred_probs)}
-
 
 # -----------------------
 # Interfaz Gradio
 # -----------------------
 with gr.Blocks() as demo:
     gr.Markdown("## Clasificador de Dígitos MNIST 🚀")
-    gr.Markdown("Sube un dígito, recibe la predicción y corrige si es necesario.")
+    gr.Markdown("Sube un dígito, recibe la predicción y las probabilidades de cada número.\n"
+                "Si quieres, corrige la etiqueta para reentrenar el modelo.")
 
     img_input = gr.Image(type="pil", label="Sube un dígito")
+    label_input = gr.Dropdown(choices=["-"] + [str(i) for i in range(10)],
+                              value="-",
+                              label="Etiqueta correcta (opcional)")
 
-    # Dropdown seguro para etiquetas
-    # Dropdown seguro para etiquetas, con opción de no reentrenar
-    label_input = gr.Dropdown(
-        choices=["-"] + [str(i) for i in range(10)],  # "-" significa "no reentrenar"
-        value="-",
-        label="Etiqueta correcta (opcional)"
-        )
-
-
-    output_label = gr.Label(num_top_classes=1, label="Predicción")
+    output_label = gr.Label(num_top_classes=10, label="Predicción con probabilidades")
     btn = gr.Button("Predecir y Reentrenar si es necesario")
     btn.click(predict_and_correct, inputs=[img_input, label_input], outputs=output_label)
 

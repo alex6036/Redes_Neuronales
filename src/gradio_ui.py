@@ -36,34 +36,53 @@ def predict_and_correct(image: Image.Image, correct_label: int = None):
     img = image.convert("L").resize((28,28))
     img_array = np.array(img).reshape(1, 28*28).astype("float32") / 255.0
 
-    # Predicción
+    # Predicción inicial
     pred = model.predict(img_array)
     pred_class = int(np.argmax(pred))
 
     # Reentrenar si el usuario corrigió la etiqueta
     if correct_label is not None:
-        # Cargar dataset guardado o crear uno nuevo
+        # -----------------------
+        # Cargar dataset base de MNIST
+        # -----------------------
+        mnist_file = "data/mnist_full.npz"
+        mnist_data = np.load(mnist_file)
+        X_base = mnist_data["X"]
+        y_base = mnist_data["y"]
+
+        # -----------------------
+        # Cargar dataset incremental
+        # -----------------------
         data_file = os.path.join(DATA_PATH, "dataset.npz")
         if os.path.exists(data_file):
-            data = np.load(data_file)
-            X = np.vstack([data["X"], img_array])
-            y = np.hstack([data["y"], correct_label])
+            new_data = np.load(data_file)
+            X_new = new_data["X"]
+            y_new = new_data["y"]
+            X_combined = np.vstack([X_base, X_new, img_array])
+            y_combined = np.vstack([y_base,
+                                    tf.keras.utils.to_categorical(y_new, num_classes=10),
+                                    tf.keras.utils.to_categorical([correct_label], num_classes=10)])
         else:
-            X = img_array
-            y = np.array([correct_label])
+            X_combined = np.vstack([X_base, img_array])
+            y_combined = np.vstack([y_base,
+                                    tf.keras.utils.to_categorical([correct_label], num_classes=10)])
 
-        # Guardar dataset
-        np.savez(data_file, X=X, y=y)
+        # Guardar dataset incremental
+        np.savez(data_file, X=np.vstack([X_new, img_array]) if 'X_new' in locals() else img_array,
+                 y=np.hstack([y_new, correct_label]) if 'y_new' in locals() else np.array([correct_label]))
 
-        # One-hot encoding y entrenamiento
-        y_onehot = tf.keras.utils.to_categorical(y, num_classes=10)
-        dataset = tf.data.Dataset.from_tensor_slices((X, y_onehot)).batch(8)
+        # -----------------------
+        # Crear dataset y reentrenar
+        # -----------------------
+        dataset = tf.data.Dataset.from_tensor_slices((X_combined, y_combined)).batch(32)
         model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
         model.fit(dataset, epochs=3, verbose=0)
         model.save(MODEL_PATH)
-        pred_class = correct_label  # reflejar corrección inmediata
+
+        pred_class = correct_label  # reflejar corrección inmediatamente
 
     return pred_class
+
 
 # -----------------------
 # Interfaz Gradio

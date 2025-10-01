@@ -16,7 +16,8 @@ os.makedirs("models", exist_ok=True)
 def get_model():
     if os.path.exists(MODEL_PATH):
         try:
-            model = tf.keras.models.load_model(MODEL_PATH)
+            model = tf.keras.models.load_model("models/mnist_model.h5")
+
             print("✅ Modelo cargado desde disco.")
         except:
             print("⚠️ Error cargando modelo. Entrena un modelo nuevo primero.")

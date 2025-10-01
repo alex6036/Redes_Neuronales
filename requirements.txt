@@ -1,0 +1,6 @@
+# Librerías necesarias para el proyecto
+numpy
+pandas
+scikit-learn
+tensorflow
+matplotlib

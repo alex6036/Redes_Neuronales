@@ -1,0 +1,8 @@
+# Ignorar archivos y carpetas
+__pycache__/
+*.pyc
+*.h5
+*.pt
+models/
+.DS_Store
+.ipynb_checkpoints/

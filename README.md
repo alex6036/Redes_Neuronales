@@ -1,5 +1,6 @@
 # Proyecto de Redes Neuronales
 
+https://github.com/alex6036/Redes_Neuronales.git
 Este repositorio contiene la estructura base para el desarrollo de proyectos de redes neuronales, desde la experimentación inicial hasta la implementación y evaluación de modelos.
 
 ## Estructura del Proyecto
